@@ -1,0 +1,19 @@
+---
+import Base from "../layouts/Base.astro";
+import { calculators } from "../engine/registry";
+---
+
+<Base title="Page not found — FinCalc" description="That page doesn't exist." path="/404" noindex>
+	<section class="hero">
+		<h1>Page not found</h1>
+		<p class="lede">That page doesn't exist — but one of these calculators might be what you need.</p>
+	</section>
+	<div class="card-grid">
+		{calculators.map((c) => (
+			<a class="calc-card" href={`/${c.slug}`}>
+				<h3>{c.title}</h3>
+				<p>{c.description}</p>
+			</a>
+		))}
+	</div>
+</Base>

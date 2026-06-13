@@ -1,0 +1,63 @@
+---
+import "../styles/global.css";
+
+interface Props {
+	title: string;
+	description: string;
+	path?: string;
+	noindex?: boolean;
+}
+
+const { title, description, path = "", noindex = false } = Astro.props;
+const SITE = "FinCalc";
+const canonical = new URL(path, Astro.site ?? "https://example.com").href;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+		{noindex && <meta name="robots" content="noindex,follow" />}
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta name="theme-color" content="#2563eb" />
+		<slot name="head" />
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container">
+				<a href="/" class="brand">Fin<span>Calc</span></a>
+				<nav class="nav">
+					<a href="/mortgage-calculator">Mortgage</a>
+					<a href="/loan-calculator">Loan</a>
+					<a href="/retirement-calculator">Retirement</a>
+					<a href="/tax-calculator">Tax</a>
+				</nav>
+			</div>
+		</header>
+
+		<main class="container">
+			<slot />
+		</main>
+
+		<footer class="site-footer">
+			<div class="container">
+				<p class="disclaimer-foot">
+					<strong>{SITE}</strong> · Free financial calculators. All calculations run in your
+					browser — your data never leaves your device. For general information only, not
+					financial, investment, or tax advice.
+				</p>
+				<p>
+					<a href="/">Home</a> · <a href="/privacy">Privacy</a> ·
+					<a href="/calculators/mortgage">All calculators</a>
+				</p>
+			</div>
+		</footer>
+	</body>
+</html>

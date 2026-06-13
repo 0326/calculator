@@ -1,0 +1,8 @@
+---
+// Ad placeholder with reserved fixed height to prevent CLS (PRD §10.1).
+// Never rendered above the calculator tool. Swap the inner markup for the real
+// AdSense/Mediavine unit once approved — the reserved box stays identical.
+interface Props { format?: "leaderboard" | "rectangle"; label?: string; }
+const { format = "rectangle", label = "Advertisement" } = Astro.props;
+---
+<aside class={`ad-slot ad-${format}`} aria-label={label} data-ad-format={format}>{label}</aside>

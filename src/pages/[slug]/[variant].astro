@@ -1,0 +1,38 @@
+---
+// Long-tail variant pages, generated from config × preset — but ONLY those that
+// pass the anti-HCU gate (unique copy + distinct computed result). PRD §4.3.
+import CalcPage from "../../components/CalcPage.astro";
+import { qualifiedVariants } from "../../engine/registry";
+import type { CalculatorDef, InputValues } from "../../engine/types";
+
+export function getStaticPaths() {
+	return qualifiedVariants().map(({ calculator, preset }) => ({
+		params: { slug: calculator.slug, variant: preset.id },
+		props: { def: calculator, presetLabel: preset.label, blurb: preset.blurb, values: preset.values },
+	}));
+}
+
+const { def, presetLabel, blurb, values } = Astro.props as {
+	def: CalculatorDef;
+	presetLabel: string;
+	blurb: string;
+	values: Partial<InputValues>;
+};
+
+const path = `/${def.slug}/${Astro.params.variant}`;
+const crumbs = [
+	{ name: "Home", url: "/" },
+	{ name: def.title, url: `/${def.slug}` },
+	{ name: presetLabel, url: path },
+];
+---
+
+<CalcPage
+	def={def}
+	title={`${presetLabel} Calculator`}
+	description={blurb}
+	path={path}
+	crumbs={crumbs}
+	initialValues={values}
+	intro={blurb}
+/>

@@ -1,0 +1,52 @@
+---
+import Base from "../../layouts/Base.astro";
+import Calculator from "../../components/Calculator.tsx";
+import AdSlot from "../../components/AdSlot.astro";
+import { COMPARES } from "../../content/compares";
+import { byId } from "../../engine/registry";
+
+export function getStaticPaths() {
+	return COMPARES.map((spec) => ({ params: { pair: spec.pair }, props: { spec } }));
+}
+
+const { spec } = Astro.props;
+const def = byId(spec.calcId)!;
+const path = `/compare/${spec.pair}`;
+---
+
+<Base title={`${spec.title} — Side-by-Side Comparison`} description={spec.intro} path={path}>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href="/">Home</a> <span> › </span>
+		<a href={`/${def.slug}`}>{def.title}</a> <span> › </span>
+		<span>{spec.title}</span>
+	</nav>
+
+	<section class="hero">
+		<h1>{spec.title}</h1>
+		<p class="lede">{spec.intro}</p>
+	</section>
+
+	<div class="compare-grid">
+		<div class="calc-shell">
+			<h2 style="margin:0 0 8px;font-size:18px">{spec.a.label}</h2>
+			<Calculator client:visible calculatorId={def.id} initialValues={spec.a.values} compact />
+		</div>
+		<div class="calc-shell">
+			<h2 style="margin:0 0 8px;font-size:18px">{spec.b.label}</h2>
+			<Calculator client:visible calculatorId={def.id} initialValues={spec.b.values} compact />
+		</div>
+	</div>
+
+	<AdSlot format="leaderboard" />
+
+	<div class="prose">
+		<h2>The bottom line</h2>
+		<p>{spec.takeaway}</p>
+		<p class="disclaimer">{def.content.disclaimer}</p>
+	</div>
+</Base>
+
+<style>
+	.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+	@media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+</style>
