@@ -87,5 +87,11 @@ const nav = [
 				</p>
 			</div>
 		</footer>
+
+		{/* Privacy-friendly analytics: record a pageview. No PII, no input values. */}
+		<script>
+			import { pageview } from "../lib/analytics";
+			pageview();
+		</script>
 	</body>
 </html>
