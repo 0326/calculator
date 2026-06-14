@@ -1,13 +1,37 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Search from "../Search.tsx";
 import { calculators } from "../../engine/registry";
 import { ui } from "../../i18n/ui";
 import { calcContent } from "../../i18n/content";
 import { localizePath, type Locale } from "../../i18n/config";
+import type { Category } from "../../engine/types";
 
 interface Props { locale?: Locale; }
 const { locale = "en" } = Astro.props;
 const t = ui(locale);
+
+// Localized category labels, mirrored from CalcPage so search matches on category too.
+const categoryLabel: Record<Category, string> = {
+	mortgage: t.navMortgage,
+	loan: t.navLoan,
+	retirement: t.navRetirement,
+	tax: t.navTax,
+	investment: t.navRetirement,
+};
+
+// Pre-localize the full list on the server. The island uses this as its initial
+// (empty-query) state, so every card is present in the static HTML for SEO.
+const items = calculators.map((c) => {
+	const l10n = calcContent(c.id, locale);
+	return {
+		id: c.id,
+		href: localizePath(`/${c.slug}`, locale),
+		title: l10n.title ?? c.title,
+		description: l10n.description ?? c.description,
+		category: categoryLabel[c.category],
+	};
+});
 ---
 
 <Base
@@ -21,12 +45,11 @@ const t = ui(locale);
 		<p class="lede">{t.heroLede}</p>
 	</section>
 
-	<div class="card-grid">
-		{calculators.map((c) => (
-			<a class="calc-card" href={localizePath(`/${c.slug}`, locale)}>
-				<h3>{calcContent(c.id, locale).title ?? c.title}</h3>
-				<p>{calcContent(c.id, locale).description ?? c.description}</p>
-			</a>
-		))}
-	</div>
+	<Search
+		client:idle
+		items={items}
+		placeholder={t.searchPlaceholder}
+		emptyText={t.searchEmpty}
+		label={t.allCalculators}
+	/>
 </Base>
