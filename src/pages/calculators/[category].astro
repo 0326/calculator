@@ -1,0 +1,37 @@
+---
+import Base from "../../layouts/Base.astro";
+import { byCategory, categories } from "../../engine/registry";
+import type { Category } from "../../engine/types";
+
+export function getStaticPaths() {
+	return categories().map((category) => ({ params: { category } }));
+}
+
+const category = Astro.params.category as Category;
+const items = byCategory(category);
+const Title = `${category[0].toUpperCase()}${category.slice(1)}`;
+const path = `/calculators/${category}`;
+---
+
+<Base
+	title={`${Title} Calculators — FinCalc`}
+	description={`Free ${Title.toLowerCase()} calculators with interactive charts. Computed privately in your browser.`}
+	path={path}
+>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href="/">Home</a> <span> › </span> <span>{Title}</span>
+	</nav>
+	<section class="hero">
+		<h1>{Title} Calculators</h1>
+		<p class="lede">Pick a calculator below — each one is interactive, charted, and free.</p>
+	</section>
+
+	<div class="card-grid">
+		{items.map((c) => (
+			<a class="calc-card" href={`/${c.slug}`}>
+				<h3>{c.title}</h3>
+				<p>{c.description}</p>
+			</a>
+		))}
+	</div>
+</Base>

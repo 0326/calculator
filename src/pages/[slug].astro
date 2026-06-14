@@ -1,0 +1,30 @@
+---
+import CalcPage from "../components/CalcPage.astro";
+import { calculators } from "../engine/registry";
+import type { CalculatorDef } from "../engine/types";
+
+export function getStaticPaths() {
+	return calculators.map((def) => ({ params: { slug: def.slug }, props: { def } }));
+}
+
+const { def } = Astro.props as { def: CalculatorDef };
+
+const variants = def.inputs
+	.flatMap((f) => f.presets ?? [])
+	.map((p) => ({ slug: `/${def.slug}/${p.id}`, label: p.label }));
+
+const crumbs = [
+	{ name: "Home", url: "/" },
+	{ name: `${def.category[0].toUpperCase()}${def.category.slice(1)}`, url: `/calculators/${def.category}` },
+	{ name: def.title, url: `/${def.slug}` },
+];
+---
+
+<CalcPage
+	def={def}
+	title={`${def.title} — Free, Private, Interactive`}
+	description={def.description}
+	path={`/${def.slug}`}
+	crumbs={crumbs}
+	variants={variants}
+/>

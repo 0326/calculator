@@ -1,0 +1,45 @@
+---
+import type { CalculatorDef } from "../engine/types";
+
+interface Crumb { name: string; url: string; }
+interface Props {
+	def: CalculatorDef;
+	url: string;
+	crumbs: Crumb[];
+}
+const { def, url, crumbs } = Astro.props;
+const site = Astro.site?.href ?? "https://example.com/";
+
+const graph = [
+	{
+		"@type": "WebApplication",
+		"@id": url + "#app",
+		name: def.title,
+		url,
+		applicationCategory: def.schemaOrg.applicationCategory,
+		operatingSystem: "Any (web)",
+		offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+		description: def.description,
+	},
+	{
+		"@type": "FAQPage",
+		"@id": url + "#faq",
+		mainEntity: def.content.faq.map((f) => ({
+			"@type": "Question",
+			name: f.q,
+			acceptedAnswer: { "@type": "Answer", text: f.a },
+		})),
+	},
+	{
+		"@type": "BreadcrumbList",
+		itemListElement: crumbs.map((c, i) => ({
+			"@type": "ListItem",
+			position: i + 1,
+			name: c.name,
+			item: new URL(c.url, site).href,
+		})),
+	},
+];
+const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph });
+---
+<script type="application/ld+json" set:html={json} is:inline />

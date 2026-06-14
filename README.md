@@ -1,90 +1,55 @@
-# React + Vite + Hono + Cloudflare Workers
+# FinCalc — Financial Calculator Site
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/vite-react-template)
+Config-driven financial calculators with the clearest interactive charts on the web.
+100% free, no sign-up, and **every calculation runs in the browser** — financial data never
+leaves the device. Built for Core Web Vitals (which, in this niche, equals traffic).
 
-This template provides a minimal setup for building a React application with TypeScript and Vite, designed to run on Cloudflare Workers. It features hot module replacement, ESLint integration, and the flexibility of Workers deployments.
+See [docs/prd.md](docs/prd.md) for the product strategy and [docs/tech-plan.md](docs/tech-plan.md)
+for the architecture and roadmap.
 
-![React + TypeScript + Vite + Cloudflare Workers](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/fc7b4b62-442b-4769-641b-ad4422d74300/public)
+## Stack
 
-<!-- dash-content-start -->
+- **Astro** (static output, islands) — zero JS by default; only the calculator hydrates.
+- **React 19** islands for interactive calculators + charts.
+- **uPlot** (time-series) + hand-drawn **SVG** (donut / bars) — lightweight, CWV-friendly.
+- **Pure-TS engine** (`src/engine`) — framework-agnostic, integer-cents math, fully tested.
+- **Cloudflare** static hosting (`wrangler.json`).
 
-🚀 Supercharge your web development with this powerful stack:
+## Architecture
 
-- [**React**](https://react.dev/) - A modern UI library for building interactive interfaces
-- [**Vite**](https://vite.dev/) - Lightning-fast build tooling and development server
-- [**Hono**](https://hono.dev/) - Ultralight, modern backend framework
-- [**Cloudflare Workers**](https://developers.cloudflare.com/workers/) - Edge computing platform for global deployment
-
-### ✨ Key Features
-
-- 🔥 Hot Module Replacement (HMR) for rapid development
-- 📦 TypeScript support out of the box
-- 🛠️ ESLint configuration included
-- ⚡ Zero-config deployment to Cloudflare's global network
-- 🎯 API routes with Hono's elegant routing
-- 🔄 Full-stack development setup
-- 🔎 Built-in Observability to monitor your Worker
-
-Get started in minutes with local development or deploy directly via the Cloudflare dashboard. Perfect for building modern, performant web applications at the edge.
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-To start a new project with this template, run:
-
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/vite-react-template
+```
+src/engine/       Pure-TS calc engine: types · money (cents) · finance · format · registry
+src/calculators/  One declarative config per calculator (mortgage / loan / retirement / tax)
+src/charts/       React chart islands (uPlot + SVG) + accessible data-table fallback
+src/components/   Calculator island, Astro page shell, JSON-LD, ad slots
+src/pages/        SSG routes: core calculators, long-tail variants, hubs, comparisons, embeds
+src/content/      Comparison specs (and future locale rules / copy)
+test/             Vitest golden cases for the engine (the trust root)
 ```
 
-A live deployment of this template is available at:
-[https://react-vite-template.templates.workers.dev](https://react-vite-template.templates.workers.dev)
+Adding a calculator = adding one config file in `src/calculators/` and registering it.
 
-## Development
-
-Install dependencies:
+## Commands
 
 ```bash
 npm install
+npm run dev        # local dev server
+npm test           # engine golden tests (must stay green)
+npm run check      # Astro + TypeScript type check
+npm run build      # static build → dist/
+npm run preview    # serve the production build
+npm run deploy     # build + wrangler deploy to Cloudflare
 ```
 
-Start the development server with:
+## Key properties
 
-```bash
-npm run dev
-```
+- **Privacy:** no accounts, no server-side storage; all math is client-side.
+- **SEO:** every page is static HTML with `WebApplication` + `FAQPage` + `BreadcrumbList`
+  structured data, a sitemap, and unique per-page computed results (anti-HCU gate in the
+  variant route, `src/engine/registry.ts`).
+- **Embed:** `/embed/<id>` + `public/embed.js` loader — partners drop in a calculator,
+  each install is a backlink.
+- **Compliance:** "not financial advice" disclaimers, privacy policy, no dark patterns,
+  no subscriptions.
 
-Your application will be available at [http://localhost:5173](http://localhost:5173).
-
-## Production
-
-Build your project for production:
-
-```bash
-npm run build
-```
-
-Preview your build locally:
-
-```bash
-npm run preview
-```
-
-Deploy your project to Cloudflare Workers:
-
-```bash
-npm run build && npm run deploy
-```
-
-Monitor your workers:
-
-```bash
-npx wrangler tail
-```
-
-## Additional Resources
-
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [React Documentation](https://reactjs.org/)
-- [Hono Documentation](https://hono.dev/)
+> For general information only — not financial, investment, or tax advice.
