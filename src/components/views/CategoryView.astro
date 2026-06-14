@@ -1,0 +1,46 @@
+---
+import Base from "../../layouts/Base.astro";
+import { byCategory } from "../../engine/registry";
+import type { Category } from "../../engine/types";
+import { ui } from "../../i18n/ui";
+import { calcContent } from "../../i18n/content";
+import { localizePath, type Locale } from "../../i18n/config";
+
+interface Props { locale?: Locale; category: Category; }
+const { locale = "en", category } = Astro.props;
+const t = ui(locale);
+const items = byCategory(category);
+
+const label: Record<Category, string> = {
+	mortgage: t.navMortgage,
+	loan: t.navLoan,
+	retirement: t.navRetirement,
+	tax: t.navTax,
+	investment: t.navRetirement,
+};
+const Title = label[category];
+---
+
+<Base
+	title={`${Title} · ${t.brand}`}
+	description={t.tagline}
+	path={`/calculators/${category}`}
+	locale={locale}
+>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href={localizePath("/", locale)}>{t.home}</a> <span> › </span> <span>{Title}</span>
+	</nav>
+	<section class="hero">
+		<h1>{Title}</h1>
+		<p class="lede">{t.tagline}</p>
+	</section>
+
+	<div class="card-grid">
+		{items.map((c) => (
+			<a class="calc-card" href={localizePath(`/${c.slug}`, locale)}>
+				<h3>{calcContent(c.id, locale).title ?? c.title}</h3>
+				<p>{calcContent(c.id, locale).description ?? c.description}</p>
+			</a>
+		))}
+	</div>
+</Base>

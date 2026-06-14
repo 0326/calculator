@@ -8,7 +8,20 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
 	site: "https://example.com",
 	output: "static",
-	integrations: [react(), sitemap()],
+	i18n: {
+		defaultLocale: "en",
+		locales: ["en", "zh", "en-gb", "en-ca"],
+		routing: { prefixDefaultLocale: false },
+	},
+	integrations: [
+		react(),
+		sitemap({
+			i18n: {
+				defaultLocale: "en",
+				locales: { en: "en-US", zh: "zh-CN", "en-gb": "en-GB", "en-ca": "en-CA" },
+			},
+		}),
+	],
 	build: {
 		inlineStylesheets: "auto",
 	},

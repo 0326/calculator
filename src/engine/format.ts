@@ -5,6 +5,7 @@ import type { LocaleCode, OutputFormat } from "./types";
 const CURRENCY_BY_LOCALE: Record<LocaleCode, string> = {
 	"en-US": "USD",
 	"en-GB": "GBP",
+	"en-CA": "CAD",
 	"zh-CN": "CNY",
 };
 

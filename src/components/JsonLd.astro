@@ -1,30 +1,41 @@
 ---
-import type { CalculatorDef } from "../engine/types";
+import type { CalculatorDef, FAQItem } from "../engine/types";
+import { LOCALE_META, type Locale } from "../i18n/config";
 
 interface Crumb { name: string; url: string; }
 interface Props {
 	def: CalculatorDef;
 	url: string;
 	crumbs: Crumb[];
+	locale?: Locale;
+	title?: string;
+	description?: string;
+	faq?: FAQItem[];
 }
-const { def, url, crumbs } = Astro.props;
+const { def, url, crumbs, locale = "en", title, description, faq } = Astro.props;
 const site = Astro.site?.href ?? "https://example.com/";
+const inLanguage = LOCALE_META[locale].htmlLang;
+const name = title ?? def.title;
+const desc = description ?? def.description;
+const faqItems = faq ?? def.content.faq;
 
 const graph = [
 	{
 		"@type": "WebApplication",
 		"@id": url + "#app",
-		name: def.title,
+		name,
 		url,
+		inLanguage,
 		applicationCategory: def.schemaOrg.applicationCategory,
 		operatingSystem: "Any (web)",
 		offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-		description: def.description,
+		description: desc,
 	},
 	{
 		"@type": "FAQPage",
 		"@id": url + "#faq",
-		mainEntity: def.content.faq.map((f) => ({
+		inLanguage,
+		mainEntity: faqItems.map((f) => ({
 			"@type": "Question",
 			name: f.q,
 			acceptedAnswer: { "@type": "Answer", text: f.a },

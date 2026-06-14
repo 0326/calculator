@@ -1,0 +1,17 @@
+---
+import CompareView from "../../../components/views/CompareView.astro";
+import { COMPARES } from "../../../content/compares";
+import { PREFIXED_LOCALES, LOCALE_META } from "../../../i18n/config";
+
+export function getStaticPaths() {
+	return PREFIXED_LOCALES.flatMap((l) =>
+		COMPARES.map((spec) => ({
+			params: { locale: LOCALE_META[l].prefix, pair: spec.pair },
+			props: { locale: l, spec },
+		})),
+	);
+}
+
+const { locale, spec } = Astro.props;
+---
+<CompareView locale={locale} spec={spec} />

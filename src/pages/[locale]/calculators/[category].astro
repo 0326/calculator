@@ -1,0 +1,18 @@
+---
+import CategoryView from "../../../components/views/CategoryView.astro";
+import { categories } from "../../../engine/registry";
+import { PREFIXED_LOCALES, LOCALE_META, type Locale } from "../../../i18n/config";
+import type { Category } from "../../../engine/types";
+
+export function getStaticPaths() {
+	return PREFIXED_LOCALES.flatMap((l) =>
+		categories().map((category) => ({
+			params: { locale: LOCALE_META[l].prefix, category },
+			props: { locale: l, category },
+		})),
+	);
+}
+
+const { locale, category } = Astro.props as { locale: Locale; category: Category };
+---
+<CategoryView locale={locale} category={category} />

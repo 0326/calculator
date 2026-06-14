@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { byId } from "../engine/registry";
 import { defaultsOf, type InputField, type InputValues } from "../engine/types";
 import { formatOutput } from "../engine/format";
+import { type Locale, formatLocaleOf } from "../i18n/config";
+import { calcContent, localizedExplain } from "../i18n/content";
 import ChartCard from "../charts/ChartCard";
 
 interface Props {
@@ -10,21 +12,24 @@ interface Props {
 	initialValues?: Partial<InputValues>;
 	/** Hide intro/explain prose (used inside compact embeds). */
 	compact?: boolean;
+	locale?: Locale;
 }
 
 function Field({
 	field,
+	label,
 	value,
 	error,
 	onChange,
 }: {
 	field: InputField;
+	label: string;
 	value: number | string | boolean;
 	error: string | null;
 	onChange: (v: number | string | boolean) => void;
 }) {
 	const id = `f-${field.id}`;
-	const common = { id, "aria-label": field.label } as const;
+	const common = { id, "aria-label": label } as const;
 
 	let control: React.ReactNode;
 	if (field.type === "select") {
@@ -85,7 +90,7 @@ function Field({
 
 	return (
 		<div className={`field${error ? " field-error" : ""}`}>
-			<label htmlFor={id}>{field.label}</label>
+			<label htmlFor={id}>{label}</label>
 			{control}
 			{field.help && !error && <small className="help">{field.help}</small>}
 			{error && <small className="err">{error}</small>}
@@ -93,8 +98,10 @@ function Field({
 	);
 }
 
-export default function Calculator({ calculatorId, initialValues, compact }: Props) {
+export default function Calculator({ calculatorId, initialValues, compact, locale = "en" }: Props) {
 	const def = byId(calculatorId);
+	const fl = formatLocaleOf(locale);
+	const l10n = def ? calcContent(def.id, locale) : {};
 	const [values, setValues] = useState<InputValues>(() => {
 		const base: InputValues = def ? defaultsOf(def) : {};
 		if (initialValues) {
@@ -128,6 +135,7 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 						<Field
 							key={f.id}
 							field={f}
+							label={l10n.inputs?.[f.id] ?? f.label}
 							value={values[f.id]}
 							error={errors[f.id]}
 							onChange={(v) => set(f.id, v)}
@@ -137,16 +145,16 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 
 				<div className="calc-results" aria-live="polite">
 					<div className="result-primary">
-						<span className="result-label">{primary.label}</span>
+						<span className="result-label">{l10n.outputs?.[primary.id] ?? primary.label}</span>
 						<span className="result-value">
-							{formatOutput(result.outputs[primary.id], primary.format)}
+							{formatOutput(result.outputs[primary.id], primary.format, fl)}
 						</span>
 					</div>
 					<dl className="result-list">
 						{secondary.map((o) => (
 							<div key={o.id} className="result-item">
-								<dt>{o.label}</dt>
-								<dd>{formatOutput(result.outputs[o.id], o.format)}</dd>
+								<dt>{l10n.outputs?.[o.id] ?? o.label}</dt>
+								<dd>{formatOutput(result.outputs[o.id], o.format, fl)}</dd>
 							</div>
 						))}
 					</dl>
@@ -154,7 +162,7 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 			</div>
 
 			{!compact && (
-				<p className="calc-explain">{def.content.explain(result, values)}</p>
+				<p className="calc-explain">{localizedExplain(def, result, values, locale)}</p>
 			)}
 
 			<div className="charts">
