@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import LanguagePicker from "../components/LanguagePicker.astro";
+import CookieConsent from "../components/CookieConsent.astro";
 import { ui } from "../i18n/ui";
 import {
 	LOCALES,
@@ -88,5 +89,7 @@ const nav = [
 				</p>
 			</div>
 		</footer>
+
+		<CookieConsent locale={locale} />
 	</body>
 </html>

@@ -1,0 +1,240 @@
+---
+// Cookie consent banner — self-contained, localized, minimal JS.
+// Brand stance: no dark patterns. Accept and Decline are equal, real choices
+// (PRD §8/§10.4). Defaults to the minimum necessary; non-essential cookies,
+// analytics and ads stay OFF until the user explicitly accepts.
+import { localizePath, type Locale } from "../i18n/config";
+
+interface Props {
+	locale?: Locale;
+}
+const { locale = "en" } = Astro.props;
+
+// Consent copy is kept local to this component (ui.ts is shared — do not edit).
+// zh is Simplified Chinese.
+interface ConsentCopy {
+	title: string;
+	body: string;
+	accept: string;
+	decline: string;
+	learnMore: string;
+	ariaLabel: string;
+}
+
+const COPY: Record<Locale, ConsentCopy> = {
+	en: {
+		title: "Your privacy",
+		body:
+			"We use only the cookies needed to run this site. With your consent we'd also enable optional analytics and ads to support free calculators. You can decline — the site works fully either way.",
+		accept: "Accept optional cookies",
+		decline: "Decline",
+		learnMore: "Privacy policy",
+		ariaLabel: "Cookie consent",
+	},
+	zh: {
+		title: "您的隐私",
+		body:
+			"我们仅使用运行本站所必需的 Cookie。在您同意后，我们还会启用可选的分析和广告，以支持免费计算器。您可以拒绝——无论哪种选择，网站都能完整使用。",
+		accept: "接受可选 Cookie",
+		decline: "拒绝",
+		learnMore: "隐私政策",
+		ariaLabel: "Cookie 同意",
+	},
+	"en-gb": {
+		title: "Your privacy",
+		body:
+			"We use only the cookies needed to run this site. With your consent we'd also enable optional analytics and adverts to support free calculators. You can decline — the site works fully either way.",
+		accept: "Accept optional cookies",
+		decline: "Decline",
+		learnMore: "Privacy policy",
+		ariaLabel: "Cookie consent",
+	},
+	"en-ca": {
+		title: "Your privacy",
+		body:
+			"We use only the cookies needed to run this site. With your consent we'd also enable optional analytics and ads to support free calculators. You can decline — the site works fully either way.",
+		accept: "Accept optional cookies",
+		decline: "Decline",
+		learnMore: "Privacy policy",
+		ariaLabel: "Cookie consent",
+	},
+};
+
+const t = COPY[locale];
+// Keep the privacy link in-locale (e.g. /zh/privacy on the Chinese site).
+const privacyHref = localizePath("/privacy", locale);
+---
+
+<!--
+	SSR-safe: rendered hidden by default (hidden attribute). A tiny inline script
+	reveals it only when no prior choice exists in localStorage, so there is no
+	flash on returning visits. Fixed-position bottom bar → no layout shift (CLS).
+-->
+<div
+	id="cookie-consent"
+	class="cookie-consent"
+	role="dialog"
+	aria-modal="false"
+	aria-label={t.ariaLabel}
+	aria-live="polite"
+	hidden
+>
+	<div class="cc-inner">
+		<div class="cc-text">
+			<p class="cc-title">{t.title}</p>
+			<p class="cc-body">
+				{t.body}{" "}
+				<a href={privacyHref} class="cc-link">{t.learnMore}</a>
+			</p>
+		</div>
+		<div class="cc-actions">
+			<button type="button" class="cc-btn cc-decline" data-cc="decline">{t.decline}</button>
+			<button type="button" class="cc-btn cc-accept" data-cc="accept">{t.accept}</button>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+	(function () {
+		var KEY = "fincalc_consent"; // "accepted" | "declined"
+		var el = document.getElementById("cookie-consent");
+		if (!el) return;
+
+		function readChoice() {
+			try {
+				return localStorage.getItem(KEY);
+			} catch (e) {
+				return null; // storage blocked → treat as no choice; non-essential stays off
+			}
+		}
+
+		function enableOptional() {
+			// HOOK: user has accepted optional cookies. Enable analytics / ad scripts
+			// here (e.g. inject GA / consent-mode update / ad provider). They MUST NOT
+			// load before this point. Left intentionally empty until providers exist.
+			// Example:
+			//   window.dataLayer = window.dataLayer || [];
+			//   gtag('consent', 'update', { ad_storage: 'granted', analytics_storage: 'granted' });
+		}
+
+		var choice = readChoice();
+		if (choice === "accepted") {
+			enableOptional();
+			return; // already decided — stay hidden
+		}
+		if (choice === "declined") {
+			return; // already decided — stay hidden, optional stays off
+		}
+
+		// No choice yet → show the banner.
+		el.hidden = false;
+
+		function decide(value) {
+			try {
+				localStorage.setItem(KEY, value);
+			} catch (e) {
+				/* storage blocked: still hide; choice just won't persist */
+			}
+			el.hidden = true;
+			if (value === "accepted") enableOptional();
+		}
+
+		el.addEventListener("click", function (ev) {
+			var target = ev.target;
+			if (!target || !target.getAttribute) return;
+			var action = target.getAttribute("data-cc");
+			if (action === "accept") decide("accepted");
+			else if (action === "decline") decide("declined");
+		});
+	})();
+</script>
+
+<style>
+	.cookie-consent {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 50;
+		background: var(--surface);
+		border-top: 1px solid var(--border);
+		box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+	}
+	.cookie-consent[hidden] {
+		display: none;
+	}
+	.cc-inner {
+		max-width: var(--maxw);
+		margin: 0 auto;
+		padding: 14px 20px;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px 20px;
+		justify-content: space-between;
+	}
+	.cc-text {
+		flex: 1 1 320px;
+		min-width: 0;
+	}
+	.cc-title {
+		margin: 0 0 2px;
+		font-weight: 700;
+		font-size: 14px;
+		color: var(--ink);
+	}
+	.cc-body {
+		margin: 0;
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--ink-soft);
+	}
+	.cc-link {
+		color: var(--brand);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	.cc-actions {
+		display: flex;
+		gap: 10px;
+		flex: 0 0 auto;
+	}
+	.cc-btn {
+		font: inherit;
+		font-size: 14px;
+		font-weight: 600;
+		padding: 9px 16px;
+		border-radius: 8px;
+		cursor: pointer;
+		border: 1px solid var(--border);
+	}
+	.cc-btn:focus-visible {
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+	}
+	/* Decline is a real, equal option — same prominence as Accept (no dark pattern). */
+	.cc-decline {
+		background: var(--surface);
+		color: var(--ink-soft);
+	}
+	.cc-decline:hover {
+		background: var(--bg);
+	}
+	.cc-accept {
+		background: var(--brand);
+		border-color: var(--brand);
+		color: #fff;
+	}
+	.cc-accept:hover {
+		background: var(--brand-dark);
+		border-color: var(--brand-dark);
+	}
+	@media (max-width: 560px) {
+		.cc-actions {
+			width: 100%;
+		}
+		.cc-btn {
+			flex: 1 1 0;
+		}
+	}
+</style>
