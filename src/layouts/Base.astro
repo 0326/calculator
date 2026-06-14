@@ -91,5 +91,10 @@ const nav = [
 		</footer>
 
 		<CookieConsent locale={locale} />
+		{/* Privacy-friendly analytics: record a pageview. No PII, no input values. */}
+		<script>
+			import { pageview } from "../lib/analytics";
+			pageview();
+		</script>
 	</body>
 </html>

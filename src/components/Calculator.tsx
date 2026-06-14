@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { byId } from "../engine/registry";
+import { track } from "../lib/analytics";
 import { defaultsOf, type InputField, type InputValues } from "../engine/types";
 import { formatOutput } from "../engine/format";
 import { type Locale, formatLocaleOf } from "../i18n/config";
@@ -118,6 +119,26 @@ export default function Calculator({ calculatorId, initialValues, compact, local
 		[def, values, locale],
 	);
 
+	// NORTH-STAR: fire `calc_complete` ~800ms after the user stops changing inputs.
+	// Privacy: payload carries ONLY the calculatorId — never the input VALUES.
+	// Skip the initial mount so a bare page load (no user interaction) does not
+	// count as a completed calculation and inflate the metric.
+	const mounted = useRef(false);
+	useEffect(() => {
+		if (!def || !result) return;
+		if (!mounted.current) {
+			mounted.current = true;
+			return;
+		}
+		const id = window.setTimeout(() => {
+			track("calc_complete", { calculatorId: def.id });
+		}, 800);
+		return () => window.clearTimeout(id);
+		// Re-run whenever inputs (and thus `values`) change; intentionally keyed on
+		// `values`/`locale` so each settled edit counts as a completed calculation.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [values, locale, def?.id]);
+
 	if (!def || !result) return <div className="calc-error">Calculator not found.</div>;
 
 	const errors: Record<string, string | null> = {};
@@ -171,7 +192,12 @@ export default function Calculator({ calculatorId, initialValues, compact, local
 
 			<div className="charts">
 				{def.visualizations.map((viz) => (
-					<ChartCard key={viz.id} viz={viz} data={viz.dataMapping(result, values)} />
+					<ChartCard
+							key={viz.id}
+							viz={viz}
+							data={viz.dataMapping(result, values)}
+							calculatorId={def.id}
+						/>
 				))}
 			</div>
 		</div>
