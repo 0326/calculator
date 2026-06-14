@@ -1,0 +1,123 @@
+{
+  "home": {
+    "url": "https://feat-fincalc-engine-and-site-calculator.winniringy.workers.dev/",
+    "lighthouseVersion": "13.4.0",
+    "fetchTime": "2026-06-14T05:57:51.657Z",
+    "scores": {
+      "performance": 100,
+      "accessibility": 97,
+      "best-practices": 96,
+      "seo": 66
+    },
+    "metrics": {
+      "LCP": "1.2 s",
+      "CLS": "0",
+      "TBT": "0 ms",
+      "FCP": "1.2 s",
+      "SI": "2.5 s",
+      "TTI": "1.2 s",
+      "maxPotentialFID": "20 ms",
+      "totalByteWeight": "Total size was 6 KiB"
+    },
+    "failingAudits": [
+      {
+        "id": "errors-in-console",
+        "score": 0,
+        "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "server-response-time",
+        "score": 0,
+        "title": "Reduce initial server response time"
+      },
+      {
+        "id": "heading-order",
+        "score": 0,
+        "title": "Heading elements are not in a sequentially-descending order"
+      },
+      {
+        "id": "is-crawlable",
+        "score": 0,
+        "title": "Page is blocked from indexing"
+      },
+      {
+        "id": "document-latency-insight",
+        "score": 0,
+        "title": "Document request latency"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 50,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "mortgage": {
+    "url": "https://feat-fincalc-engine-and-site-calculator.winniringy.workers.dev/mortgage-calculator/",
+    "lighthouseVersion": "13.4.0",
+    "fetchTime": "2026-06-14T05:58:22.074Z",
+    "scores": {
+      "performance": 100,
+      "accessibility": 98,
+      "best-practices": 96,
+      "seo": 66
+    },
+    "metrics": {
+      "LCP": "0.8 s",
+      "CLS": "0",
+      "TBT": "0 ms",
+      "FCP": "0.8 s",
+      "SI": "2.3 s",
+      "TTI": "0.8 s",
+      "maxPotentialFID": "30 ms",
+      "totalByteWeight": "Total size was 114 KiB"
+    },
+    "failingAudits": [
+      {
+        "id": "errors-in-console",
+        "score": 0,
+        "title": "Browser errors were logged to the console"
+      },
+      {
+        "id": "redirects",
+        "score": 0,
+        "title": "Avoid multiple page redirects"
+      },
+      {
+        "id": "heading-order",
+        "score": 0,
+        "title": "Heading elements are not in a sequentially-descending order"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 50,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "is-crawlable",
+        "score": 0,
+        "title": "Page is blocked from indexing"
+      },
+      {
+        "id": "document-latency-insight",
+        "score": 0,
+        "title": "Document request latency"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 50,
+        "title": "Render-blocking requests"
+      }
+    ]
+  }
+}
