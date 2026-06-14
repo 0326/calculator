@@ -112,7 +112,11 @@ export default function Calculator({ calculatorId, initialValues, compact, local
 		return base;
 	});
 
-	const result = useMemo(() => (def ? def.compute(values) : null), [def, values]);
+	// `_locale` is passed to compute so locale-aware calculators (e.g. tax) can adapt rules.
+	const result = useMemo(
+		() => (def ? def.compute({ ...values, _locale: locale }) : null),
+		[def, values, locale],
+	);
 
 	if (!def || !result) return <div className="calc-error">Calculator not found.</div>;
 
