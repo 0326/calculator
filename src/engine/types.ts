@@ -102,7 +102,8 @@ export type VizType =
 	| "sensitivity_line"
 	| "scenario_compare"
 	| "monte_carlo_fan"
-	| "tax_bracket_bar";
+	| "tax_bracket_bar"
+	| "amortization_table";
 
 export interface VizSpec {
 	id: string;

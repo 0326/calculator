@@ -3,6 +3,7 @@ import type { ChartData, VizSpec } from "../engine/types";
 import DonutChart from "./DonutChart";
 import BarChart from "./BarChart";
 import DataTable from "./DataTable";
+import AmortizationTable from "./AmortizationTable";
 
 // uPlot pulls in canvas drawing code — load it lazily so it doesn't block first paint.
 const UPlotChart = lazy(() => import("./UPlotChart"));
@@ -20,6 +21,8 @@ function ChartBody({ viz, data }: Props) {
 			return <DonutChart data={data} />;
 		case "tax_bracket_bar":
 			return <BarChart data={data} percent={viz.id === "rate-compare"} />;
+		case "amortization_table":
+			return <AmortizationTable data={data} />;
 		default:
 			return (
 				<Suspense fallback={<div style={{ height: 280 }} aria-hidden="true" />}>
@@ -43,10 +46,12 @@ export default function ChartCard({ viz, data }: Props) {
 			<div className="chart-body" style={{ minHeight: 280 }}>
 				<ChartBody viz={viz} data={data} />
 			</div>
-			<details className="chart-table">
-				<summary>View data table</summary>
-				<DataTable data={data} />
-			</details>
+			{viz.type !== "amortization_table" && (
+				<details className="chart-table">
+					<summary>View data table</summary>
+					<DataTable data={data} />
+				</details>
+			)}
 		</figure>
 	);
 }
