@@ -26,6 +26,29 @@ export function monthlyPaymentCents(
 	return roundCents((principalCents * r * factor) / (factor - 1));
 }
 
+/**
+ * Add a whole number of months to a (year, month) pair. Pure + deterministic —
+ * no Date object, no time zones. `month` is 1-based (1 = January). Negative or
+ * fractional `months` is floored toward a whole month count. Handles December
+ * wrap and multi-year spans correctly.
+ *
+ *   addMonths(2025, 1, 0)   → { year: 2025, month: 1  }  // unchanged
+ *   addMonths(2025, 1, 12)  → { year: 2026, month: 1  }  // full-year wrap
+ *   addMonths(2025, 11, 2)  → { year: 2026, month: 1  }  // Nov + 2 → Jan next year
+ */
+export function addMonths(
+	startYear: number,
+	startMonth: number,
+	months: number,
+): { year: number; month: number } {
+	// Convert to a 0-based absolute month index, add, then convert back.
+	const absolute = startYear * 12 + (startMonth - 1) + Math.floor(months);
+	const year = Math.floor(absolute / 12);
+	// Modulo that stays non-negative even for negative absolute indices.
+	const month = ((absolute % 12) + 12) % 12 + 1;
+	return { year, month };
+}
+
 export interface AmortRow {
 	month: number; // 1-based
 	paymentCents: number;

@@ -1,0 +1,28 @@
+---
+// Pure-HTML language switcher (zero JS). Links to the same page in each locale.
+import { LOCALES, LOCALE_META, localizePath, type Locale } from "../i18n/config";
+
+interface Props {
+	barePath: string; // path without locale prefix, e.g. "/mortgage-calculator"
+	locale: Locale;
+}
+const { barePath, locale } = Astro.props;
+---
+
+<div class="lang-picker" aria-label="Language">
+	{LOCALES.map((l) => (
+		<a
+			href={localizePath(barePath, l)}
+			hreflang={LOCALE_META[l].htmlLang}
+			aria-current={l === locale ? "true" : undefined}
+		>
+			{LOCALE_META[l].label}
+		</a>
+	))}
+</div>
+
+<style>
+	.lang-picker { display: flex; gap: 6px; font-size: 12px; }
+	.lang-picker a { color: var(--ink-faint); padding: 2px 6px; border-radius: 6px; }
+	.lang-picker a[aria-current="true"] { background: #eef2ff; color: var(--brand-dark); font-weight: 700; }
+</style>

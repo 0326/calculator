@@ -1,0 +1,43 @@
+---
+import Base from "../../layouts/Base.astro";
+import { ui } from "../../i18n/ui";
+import type { Locale } from "../../i18n/config";
+
+interface Props { locale?: Locale; }
+const { locale = "en" } = Astro.props;
+const t = ui(locale);
+
+// Privacy body: English for en/UK/CA; Chinese for zh. Deeper per-locale legal copy is future work.
+const zh = locale === "zh";
+---
+
+<Base title={`${t.privacy} · ${t.brand}`} description={t.tagline} path="/privacy" locale={locale}>
+	<section class="hero"><h1>{t.privacy}</h1></section>
+	<div class="prose">
+		{zh ? (
+			<>
+				<p>最后更新：2026-06-14。</p>
+				<h2>你的财务数据不会离开你的设备</h2>
+				<p>本站的每个计算器都完全在你的浏览器中运行。你输入的数字——收入、贷款额、余额——都在本地处理，<strong>绝不会传输到或存储在任何服务器上</strong>。我们没有你输入数据的数据库，因为我们从未收到过这些数据。</p>
+				<h2>分析</h2>
+				<p>我们使用注重隐私的聚合分析来了解哪些计算器有用，仅记录页面浏览和匿名交互事件，不含个人标识，也不进行跨站跟踪。</p>
+				<h2>广告与 Cookie</h2>
+				<p>页面可能展示广告以保持免费。在需要时，同意横幅允许你接受或拒绝非必要 Cookie，我们默认采用最小化设置。</p>
+				<h2>不构成建议</h2>
+				<p>本站仅提供一般信息类计算器，不构成金融、投资或税务建议。</p>
+			</>
+		) : (
+			<>
+				<p>Last updated: 2026-06-14.</p>
+				<h2>Your financial data never leaves your device</h2>
+				<p>Every calculator on this site runs entirely in your browser. The numbers you type — income, loan amounts, balances — are processed locally and are <strong>never transmitted to or stored on any server</strong>. We have no database of your inputs because we never receive them.</p>
+				<h2>Analytics</h2>
+				<p>We use privacy-friendly, aggregate analytics to understand which calculators are useful. This records page views and anonymous interaction events, with no personal identifiers and no cross-site tracking.</p>
+				<h2>Advertising &amp; cookies</h2>
+				<p>Pages may show display ads to keep the site free. Where required, a consent banner lets you accept or decline non-essential cookies, and we default to the minimum necessary.</p>
+				<h2>No advice</h2>
+				<p>This site provides general-information calculators only. Nothing here is financial, investment, or tax advice.</p>
+			</>
+		)}
+	</div>
+</Base>

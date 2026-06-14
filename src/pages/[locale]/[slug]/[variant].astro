@@ -1,0 +1,35 @@
+---
+import CalcPage from "../../../components/CalcPage.astro";
+import { qualifiedVariants } from "../../../engine/registry";
+import { PREFIXED_LOCALES, LOCALE_META, localizePath, type Locale } from "../../../i18n/config";
+import type { CalculatorDef, InputValues } from "../../../engine/types";
+
+export function getStaticPaths() {
+	return PREFIXED_LOCALES.flatMap((l) =>
+		qualifiedVariants().map(({ calculator, preset }) => ({
+			params: { locale: LOCALE_META[l].prefix, slug: calculator.slug, variant: preset.id },
+			props: { def: calculator, locale: l, presetLabel: preset.label, blurb: preset.blurb, values: preset.values },
+		})),
+	);
+}
+
+const { def, locale, presetLabel, blurb, values } = Astro.props as {
+	def: CalculatorDef;
+	locale: Locale;
+	presetLabel: string;
+	blurb: string;
+	values: Partial<InputValues>;
+};
+
+const path = `/${def.slug}/${Astro.params.variant}`;
+---
+
+<CalcPage
+	def={def}
+	locale={locale}
+	path={path}
+	headline={`${presetLabel} Calculator`}
+	intro={blurb}
+	initialValues={values}
+	extraCrumb={{ name: presetLabel, url: localizePath(path, locale) }}
+/>

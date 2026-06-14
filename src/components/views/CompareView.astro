@@ -1,0 +1,53 @@
+---
+import Base from "../../layouts/Base.astro";
+import Calculator from "../Calculator.tsx";
+import AdSlot from "../AdSlot.astro";
+import { byId } from "../../engine/registry";
+import { calcContent } from "../../i18n/content";
+import { localizePath, type Locale } from "../../i18n/config";
+import type { CompareSpec } from "../../content/compares";
+
+interface Props { locale?: Locale; spec: CompareSpec; }
+const { locale = "en", spec } = Astro.props;
+const def = byId(spec.calcId)!;
+const path = `/compare/${spec.pair}`;
+const defTitle = calcContent(def.id, locale).title ?? def.title;
+const disclaimer = calcContent(def.id, locale).disclaimer ?? def.content.disclaimer;
+---
+
+<Base title={`${spec.title} · ${spec.calcId}`} description={spec.intro} path={path} locale={locale}>
+	<nav class="breadcrumbs" aria-label="Breadcrumb">
+		<a href={localizePath("/", locale)}>Home</a> <span> › </span>
+		<a href={localizePath(`/${def.slug}`, locale)}>{defTitle}</a> <span> › </span>
+		<span>{spec.title}</span>
+	</nav>
+
+	<section class="hero">
+		<h1>{spec.title}</h1>
+		<p class="lede">{spec.intro}</p>
+	</section>
+
+	<div class="compare-grid">
+		<div class="calc-shell">
+			<h2 style="margin:0 0 8px;font-size:18px">{spec.a.label}</h2>
+			<Calculator client:idle calculatorId={def.id} initialValues={spec.a.values} locale={locale} compact />
+		</div>
+		<div class="calc-shell">
+			<h2 style="margin:0 0 8px;font-size:18px">{spec.b.label}</h2>
+			<Calculator client:idle calculatorId={def.id} initialValues={spec.b.values} locale={locale} compact />
+		</div>
+	</div>
+
+	<AdSlot format="leaderboard" />
+
+	<div class="prose">
+		<h2>The bottom line</h2>
+		<p>{spec.takeaway}</p>
+		<p class="disclaimer">{disclaimer}</p>
+	</div>
+</Base>
+
+<style>
+	.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+	@media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+</style>

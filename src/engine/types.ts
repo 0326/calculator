@@ -1,7 +1,7 @@
 // Config-driven calculator engine — type definitions (PRD §5.1).
 // Framework-agnostic: no React / Astro imports here. Reused by site + embed + future API.
 
-export type LocaleCode = "en-US" | "en-GB" | "zh-CN";
+export type LocaleCode = "en-US" | "en-GB" | "en-CA" | "zh-CN";
 
 export interface LocaleConfig {
 	code: LocaleCode;
@@ -102,7 +102,8 @@ export type VizType =
 	| "sensitivity_line"
 	| "scenario_compare"
 	| "monte_carlo_fan"
-	| "tax_bracket_bar";
+	| "tax_bracket_bar"
+	| "amortization_table";
 
 export interface VizSpec {
 	id: string;

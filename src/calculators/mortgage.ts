@@ -1,10 +1,27 @@
 // Mortgage calculator — flagship (PRD §7). Config-driven; compute is a pure function.
 
 import type { CalculatorDef, ComputeResult, InputValues } from "../engine/types";
-import { amortize, monthlyPaymentCents, type AmortRow } from "../engine/finance";
+import { addMonths, amortize, monthlyPaymentCents, type AmortRow } from "../engine/finance";
 import { formatCurrency, formatMonths } from "../engine/format";
 
 const LOCALES = [{ code: "en-US" as const, currency: "USD", label: "United States" }];
+
+const MONTH_ABBR = [
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * Format the payoff calendar date as "Mon YYYY" (e.g. "Jan 2040"). Deterministic:
+ * the loan is assumed to start in January of `startYear`; the final payment lands
+ * `payoffMonths` later (month 1 = the start month itself).
+ */
+function payoffDateLabel(startYear: number, payoffMonths: number): string {
+	if (payoffMonths <= 0) return "—";
+	// Month 1 is the start month, so the last payment is (payoffMonths - 1) later.
+	const { year, month } = addMonths(startYear, 1, payoffMonths - 1);
+	return `${MONTH_ABBR[month - 1]} ${year}`;
+}
 
 function num(v: InputValues[string], fallback = 0): number {
 	const n = typeof v === "number" ? v : Number(v);
@@ -35,6 +52,7 @@ function compute(v: InputValues): ComputeResult {
 	const termMonths = Math.round(num(v.termYears, 30) * 12);
 	const extraMonthly = Math.round(num(v.extraMonthly) * 100);
 	const extraOnce = Math.round(num(v.extraOnce) * 100);
+	const startYear = Math.round(num(v.startYear, 2025));
 
 	const taxMonthly = Math.round((num(v.propertyTaxYearly) * 100) / 12);
 	const insMonthly = Math.round((num(v.insuranceYearly) * 100) / 12);
@@ -59,6 +77,7 @@ function compute(v: InputValues): ComputeResult {
 			totalInterest: withExtra.totalInterestCents,
 			totalCost: loanCents + withExtra.totalInterestCents,
 			payoffTime: withExtra.payoffMonths,
+			payoffDate: payoffDateLabel(startYear, withExtra.payoffMonths),
 			interestSaved: Math.max(0, interestSaved),
 			monthsSaved: Math.max(0, monthsSaved),
 		},
@@ -147,6 +166,16 @@ export const mortgage: CalculatorDef = {
 			],
 		},
 		{
+			id: "startYear",
+			label: "Start year",
+			type: "number",
+			default: 2025,
+			min: 1970,
+			max: 2100,
+			step: 1,
+			help: "The calendar year the loan begins (assumed to start in January).",
+		},
+		{
 			id: "propertyTaxYearly",
 			label: "Property tax (yearly)",
 			type: "currency",
@@ -203,6 +232,7 @@ export const mortgage: CalculatorDef = {
 		{ id: "totalInterest", label: "Total interest", format: "currency" },
 		{ id: "totalCost", label: "Total of payments", format: "currency" },
 		{ id: "payoffTime", label: "Payoff time", format: "months" },
+		{ id: "payoffDate", label: "Payoff date", format: "date" },
 		{ id: "interestSaved", label: "Interest saved (extra)", format: "currency" },
 		{ id: "monthsSaved", label: "Time saved (extra)", format: "months" },
 	],
@@ -287,6 +317,18 @@ export const mortgage: CalculatorDef = {
 					yLabel: "Monthly P&I",
 					series: [{ label: "Monthly P&I", values: payments }],
 				};
+			},
+		},
+		{
+			id: "schedule-table",
+			type: "amortization_table",
+			title: "Full amortization schedule",
+			description:
+				"Every monthly payment, grouped by year — expand a year to see its principal, interest, and remaining balance.",
+			interactive: false,
+			dataMapping: (result) => {
+				const schedule = result.detail.schedule as AmortRow[];
+				return { meta: { schedule } };
 			},
 		},
 	],

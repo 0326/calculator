@@ -1,8 +1,8 @@
 ---
-// Long-tail variant pages, generated from config × preset — but ONLY those that
-// pass the anti-HCU gate (unique copy + distinct computed result). PRD §4.3.
+// Long-tail variant pages (en), gated by the anti-HCU rule (PRD §4.3).
 import CalcPage from "../../components/CalcPage.astro";
 import { qualifiedVariants } from "../../engine/registry";
+import { localizePath } from "../../i18n/config";
 import type { CalculatorDef, InputValues } from "../../engine/types";
 
 export function getStaticPaths() {
@@ -20,19 +20,14 @@ const { def, presetLabel, blurb, values } = Astro.props as {
 };
 
 const path = `/${def.slug}/${Astro.params.variant}`;
-const crumbs = [
-	{ name: "Home", url: "/" },
-	{ name: def.title, url: `/${def.slug}` },
-	{ name: presetLabel, url: path },
-];
 ---
 
 <CalcPage
 	def={def}
-	title={`${presetLabel} Calculator`}
-	description={blurb}
+	locale="en"
 	path={path}
-	crumbs={crumbs}
-	initialValues={values}
+	headline={`${presetLabel} Calculator`}
 	intro={blurb}
+	initialValues={values}
+	extraCrumb={{ name: presetLabel, url: localizePath(path, "en") }}
 />

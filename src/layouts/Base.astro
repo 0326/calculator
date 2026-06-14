@@ -1,43 +1,76 @@
 ---
 import "../styles/global.css";
+import LanguagePicker from "../components/LanguagePicker.astro";
+import CookieConsent from "../components/CookieConsent.astro";
+import { ui } from "../i18n/ui";
+import {
+	LOCALES,
+	LOCALE_META,
+	DEFAULT_LOCALE,
+	localizePath,
+	type Locale,
+} from "../i18n/config";
 
 interface Props {
 	title: string;
 	description: string;
+	/** Bare path WITHOUT locale prefix, e.g. "/mortgage-calculator". */
 	path?: string;
+	locale?: Locale;
 	noindex?: boolean;
 }
 
-const { title, description, path = "", noindex = false } = Astro.props;
-const SITE = "FinCalc";
-const canonical = new URL(path, Astro.site ?? "https://example.com").href;
+const { title, description, path = "/", locale = "en", noindex = false } = Astro.props;
+const site = Astro.site ?? new URL("https://example.com");
+const t = ui(locale);
+const meta = LOCALE_META[locale];
+
+const canonical = new URL(localizePath(path, locale), site).href;
+const alternates = LOCALES.map((l) => ({
+	hreflang: LOCALE_META[l].htmlLang,
+	href: new URL(localizePath(path, l), site).href,
+}));
+const xDefault = new URL(localizePath(path, DEFAULT_LOCALE), site).href;
+
+const nav = [
+	{ href: localizePath("/mortgage-calculator", locale), label: t.navMortgage },
+	{ href: localizePath("/loan-calculator", locale), label: t.navLoan },
+	{ href: localizePath("/retirement-calculator", locale), label: t.navRetirement },
+	{ href: localizePath("/tax-calculator", locale), label: t.navTax },
+];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={meta.htmlLang}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonical} />
+		{alternates.map((a) => (
+			<link rel="alternate" hreflang={a.hreflang} href={a.href} />
+		))}
+		<link rel="alternate" hreflang="x-default" href={xDefault} />
 		{noindex && <meta name="robots" content="noindex,follow" />}
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
+		<meta property="og:locale" content={meta.htmlLang.replace("-", "_")} />
 		<meta name="theme-color" content="#2563eb" />
 		<slot name="head" />
 	</head>
 	<body>
 		<header class="site-header">
 			<div class="container">
-				<a href="/" class="brand">Fin<span>Calc</span></a>
+				<a href={localizePath("/", locale)} class="brand">
+					{t.brand === "FinCalc" ? <>Fin<span>Calc</span></> : t.brand}
+				</a>
 				<nav class="nav">
-					<a href="/mortgage-calculator">Mortgage</a>
-					<a href="/loan-calculator">Loan</a>
-					<a href="/retirement-calculator">Retirement</a>
-					<a href="/tax-calculator">Tax</a>
+					{nav.map((n) => <a href={n.href}>{n.label}</a>)}
+					<LanguagePicker barePath={path} locale={locale} />
 				</nav>
 			</div>
 		</header>
@@ -48,16 +81,20 @@ const canonical = new URL(path, Astro.site ?? "https://example.com").href;
 
 		<footer class="site-footer">
 			<div class="container">
-				<p class="disclaimer-foot">
-					<strong>{SITE}</strong> · Free financial calculators. All calculations run in your
-					browser — your data never leaves your device. For general information only, not
-					financial, investment, or tax advice.
-				</p>
+				<p class="disclaimer-foot"><strong>{t.brand}</strong> · {t.footer}</p>
 				<p>
-					<a href="/">Home</a> · <a href="/privacy">Privacy</a> ·
-					<a href="/calculators/mortgage">All calculators</a>
+					<a href={localizePath("/", locale)}>{t.home}</a> ·
+					<a href={localizePath("/privacy", locale)}>{t.privacy}</a> ·
+					<a href={localizePath("/calculators/mortgage", locale)}>{t.allCalculators}</a>
 				</p>
 			</div>
 		</footer>
+
+		<CookieConsent locale={locale} />
+		{/* Privacy-friendly analytics: record a pageview. No PII, no input values. */}
+		<script>
+			import { pageview } from "../lib/analytics";
+			pageview();
+		</script>
 	</body>
 </html>

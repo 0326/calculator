@@ -2,34 +2,12 @@
 // Localized later via the locale rule layer; brackets live in data, not code paths.
 
 import type { CalculatorDef, ComputeResult, InputValues } from "../engine/types";
-import { taxOwed, type TaxBracket } from "../engine/finance";
+import { taxOwed } from "../engine/finance";
 import { formatCurrency, formatPercent } from "../engine/format";
+import { regionTax } from "../i18n/tax";
+import type { Locale } from "../i18n/config";
 
 const LOCALES = [{ code: "en-US" as const, currency: "USD", label: "United States" }];
-
-const D = (dollars: number) => dollars * 100; // dollars → cents
-
-// 2024 federal brackets by filing status (upper bounds in cents; null = top bracket).
-const BRACKETS: Record<string, TaxBracket[]> = {
-	single: [
-		{ upToCents: D(11600), ratePct: 10 },
-		{ upToCents: D(47150), ratePct: 12 },
-		{ upToCents: D(100525), ratePct: 22 },
-		{ upToCents: D(191950), ratePct: 24 },
-		{ upToCents: D(243725), ratePct: 32 },
-		{ upToCents: D(609350), ratePct: 35 },
-		{ upToCents: null, ratePct: 37 },
-	],
-	married: [
-		{ upToCents: D(23200), ratePct: 10 },
-		{ upToCents: D(94300), ratePct: 12 },
-		{ upToCents: D(201050), ratePct: 22 },
-		{ upToCents: D(383900), ratePct: 24 },
-		{ upToCents: D(487450), ratePct: 32 },
-		{ upToCents: D(731200), ratePct: 35 },
-		{ upToCents: null, ratePct: 37 },
-	],
-};
 
 function num(v: InputValues[string], fallback = 0): number {
 	const n = typeof v === "number" ? v : Number(v);
@@ -39,7 +17,10 @@ function num(v: InputValues[string], fallback = 0): number {
 function compute(v: InputValues): ComputeResult {
 	const incomeCents = Math.round(num(v.income) * 100);
 	const status = String(v.filingStatus ?? "single");
-	const brackets = BRACKETS[status] ?? BRACKETS.single;
+	// `_locale` is injected by the calculator island (not a user-facing input).
+	const locale = (v._locale as Locale) ?? "en";
+	const region = regionTax(locale);
+	const brackets = region.brackets[status] ?? region.brackets.default ?? region.brackets.single;
 	const res = taxOwed(incomeCents, brackets);
 
 	return {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
 	monthlyPaymentCents,
 	amortize,
+	addMonths,
 	futureValue,
 	taxOwed,
 	monthlyRate,
@@ -76,6 +77,44 @@ describe("amortize", () => {
 		expect(a.schedule).toHaveLength(0);
 		expect(a.payoffMonths).toBe(0);
 		expect(a.totalInterestCents).toBe(0);
+	});
+});
+
+describe("addMonths", () => {
+	it("leaves the date unchanged when adding 0 months", () => {
+		expect(addMonths(2025, 1, 0)).toEqual({ year: 2025, month: 1 });
+		expect(addMonths(2025, 6, 0)).toEqual({ year: 2025, month: 6 });
+	});
+
+	it("advances within the same year", () => {
+		expect(addMonths(2025, 1, 5)).toEqual({ year: 2025, month: 6 });
+		expect(addMonths(2025, 3, 8)).toEqual({ year: 2025, month: 11 });
+	});
+
+	it("wraps across December into the next year", () => {
+		expect(addMonths(2025, 12, 1)).toEqual({ year: 2026, month: 1 });
+		expect(addMonths(2025, 11, 2)).toEqual({ year: 2026, month: 1 });
+		expect(addMonths(2025, 10, 3)).toEqual({ year: 2026, month: 1 });
+	});
+
+	it("adds whole years", () => {
+		expect(addMonths(2025, 1, 12)).toEqual({ year: 2026, month: 1 });
+		expect(addMonths(2025, 1, 360)).toEqual({ year: 2055, month: 1 });
+		expect(addMonths(2025, 7, 24)).toEqual({ year: 2027, month: 7 });
+	});
+
+	it("spans many months across multiple December wraps", () => {
+		// Jan 2025 + 29 months = Jun 2027 (2 full years + 5 months).
+		expect(addMonths(2025, 1, 29)).toEqual({ year: 2027, month: 6 });
+	});
+
+	it("floors a fractional month count", () => {
+		expect(addMonths(2025, 1, 11.9)).toEqual({ year: 2025, month: 12 });
+	});
+
+	it("handles negative offsets (going backward)", () => {
+		expect(addMonths(2025, 1, -1)).toEqual({ year: 2024, month: 12 });
+		expect(addMonths(2025, 3, -5)).toEqual({ year: 2024, month: 10 });
 	});
 });
 

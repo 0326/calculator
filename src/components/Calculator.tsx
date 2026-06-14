@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { byId } from "../engine/registry";
+import { track } from "../lib/analytics";
 import { defaultsOf, type InputField, type InputValues } from "../engine/types";
 import { formatOutput } from "../engine/format";
+import { type Locale, formatLocaleOf } from "../i18n/config";
+import { calcContent, localizedExplain } from "../i18n/content";
 import ChartCard from "../charts/ChartCard";
 
 interface Props {
@@ -10,21 +13,24 @@ interface Props {
 	initialValues?: Partial<InputValues>;
 	/** Hide intro/explain prose (used inside compact embeds). */
 	compact?: boolean;
+	locale?: Locale;
 }
 
 function Field({
 	field,
+	label,
 	value,
 	error,
 	onChange,
 }: {
 	field: InputField;
+	label: string;
 	value: number | string | boolean;
 	error: string | null;
 	onChange: (v: number | string | boolean) => void;
 }) {
 	const id = `f-${field.id}`;
-	const common = { id, "aria-label": field.label } as const;
+	const common = { id, "aria-label": label } as const;
 
 	let control: React.ReactNode;
 	if (field.type === "select") {
@@ -85,7 +91,7 @@ function Field({
 
 	return (
 		<div className={`field${error ? " field-error" : ""}`}>
-			<label htmlFor={id}>{field.label}</label>
+			<label htmlFor={id}>{label}</label>
 			{control}
 			{field.help && !error && <small className="help">{field.help}</small>}
 			{error && <small className="err">{error}</small>}
@@ -93,8 +99,10 @@ function Field({
 	);
 }
 
-export default function Calculator({ calculatorId, initialValues, compact }: Props) {
+export default function Calculator({ calculatorId, initialValues, compact, locale = "en" }: Props) {
 	const def = byId(calculatorId);
+	const fl = formatLocaleOf(locale);
+	const l10n = def ? calcContent(def.id, locale) : {};
 	const [values, setValues] = useState<InputValues>(() => {
 		const base: InputValues = def ? defaultsOf(def) : {};
 		if (initialValues) {
@@ -105,7 +113,31 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 		return base;
 	});
 
-	const result = useMemo(() => (def ? def.compute(values) : null), [def, values]);
+	// `_locale` is passed to compute so locale-aware calculators (e.g. tax) can adapt rules.
+	const result = useMemo(
+		() => (def ? def.compute({ ...values, _locale: locale }) : null),
+		[def, values, locale],
+	);
+
+	// NORTH-STAR: fire `calc_complete` ~800ms after the user stops changing inputs.
+	// Privacy: payload carries ONLY the calculatorId — never the input VALUES.
+	// Skip the initial mount so a bare page load (no user interaction) does not
+	// count as a completed calculation and inflate the metric.
+	const mounted = useRef(false);
+	useEffect(() => {
+		if (!def || !result) return;
+		if (!mounted.current) {
+			mounted.current = true;
+			return;
+		}
+		const id = window.setTimeout(() => {
+			track("calc_complete", { calculatorId: def.id });
+		}, 800);
+		return () => window.clearTimeout(id);
+		// Re-run whenever inputs (and thus `values`) change; intentionally keyed on
+		// `values`/`locale` so each settled edit counts as a completed calculation.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [values, locale, def?.id]);
 
 	if (!def || !result) return <div className="calc-error">Calculator not found.</div>;
 
@@ -128,6 +160,7 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 						<Field
 							key={f.id}
 							field={f}
+							label={l10n.inputs?.[f.id] ?? f.label}
 							value={values[f.id]}
 							error={errors[f.id]}
 							onChange={(v) => set(f.id, v)}
@@ -137,16 +170,16 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 
 				<div className="calc-results" aria-live="polite">
 					<div className="result-primary">
-						<span className="result-label">{primary.label}</span>
+						<span className="result-label">{l10n.outputs?.[primary.id] ?? primary.label}</span>
 						<span className="result-value">
-							{formatOutput(result.outputs[primary.id], primary.format)}
+							{formatOutput(result.outputs[primary.id], primary.format, fl)}
 						</span>
 					</div>
 					<dl className="result-list">
 						{secondary.map((o) => (
 							<div key={o.id} className="result-item">
-								<dt>{o.label}</dt>
-								<dd>{formatOutput(result.outputs[o.id], o.format)}</dd>
+								<dt>{l10n.outputs?.[o.id] ?? o.label}</dt>
+								<dd>{formatOutput(result.outputs[o.id], o.format, fl)}</dd>
 							</div>
 						))}
 					</dl>
@@ -154,12 +187,17 @@ export default function Calculator({ calculatorId, initialValues, compact }: Pro
 			</div>
 
 			{!compact && (
-				<p className="calc-explain">{def.content.explain(result, values)}</p>
+				<p className="calc-explain">{localizedExplain(def, result, values, locale)}</p>
 			)}
 
 			<div className="charts">
 				{def.visualizations.map((viz) => (
-					<ChartCard key={viz.id} viz={viz} data={viz.dataMapping(result, values)} />
+					<ChartCard
+							key={viz.id}
+							viz={viz}
+							data={viz.dataMapping(result, values)}
+							calculatorId={def.id}
+						/>
 				))}
 			</div>
 		</div>

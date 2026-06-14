@@ -1,0 +1,11 @@
+---
+import PrivacyView from "../../components/views/PrivacyView.astro";
+import { PREFIXED_LOCALES, LOCALE_META, type Locale } from "../../i18n/config";
+
+export function getStaticPaths() {
+	return PREFIXED_LOCALES.map((l) => ({ params: { locale: LOCALE_META[l].prefix }, props: { locale: l } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+---
+<PrivacyView locale={locale} />
