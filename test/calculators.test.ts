@@ -39,7 +39,9 @@ describe("every calculator config is internally consistent", () => {
 			it("computes outputs for all declared output fields", () => {
 				for (const f of calc.outputs) {
 					expect(result.outputs[f.id], `${calc.id}.${f.id}`).toBeDefined();
-					expect(typeof result.outputs[f.id]).toBe("number");
+					// "date"/"text" outputs are display strings; everything else is numeric cents.
+					const expected = f.format === "date" || f.format === "text" ? "string" : "number";
+					expect(typeof result.outputs[f.id], `${calc.id}.${f.id}`).toBe(expected);
 				}
 			});
 
@@ -48,7 +50,9 @@ describe("every calculator config is internally consistent", () => {
 					const data = viz.dataMapping(result, defaults);
 					const hasSeries = (data.series?.length ?? 0) > 0;
 					const hasSegments = (data.segments?.length ?? 0) > 0;
-					expect(hasSeries || hasSegments, `${calc.id}:${viz.id}`).toBe(true);
+					// Table-style vizzes carry their rows in meta rather than series/segments.
+					const hasMeta = data.meta != null && Object.keys(data.meta).length > 0;
+					expect(hasSeries || hasSegments || hasMeta, `${calc.id}:${viz.id}`).toBe(true);
 				}
 			});
 
@@ -89,6 +93,34 @@ describe("mortgage edge cases (PRD §7)", () => {
 		const r = mortgage.compute({ ...defaultsOf(mortgage), annualRate: 0 });
 		expect(r.outputs.totalInterest).toBe(0);
 		expect(r.outputs.principalInterest as number).toBeGreaterThan(0);
+	});
+
+	it("computes the payoff calendar date from start year + term", () => {
+		// 30-year loan starting Jan 2025 → 360 payments → last is Dec 2054.
+		const r = mortgage.compute({ ...defaultsOf(mortgage), startYear: 2025 });
+		expect(r.outputs.payoffDate).toBe("Dec 2054");
+	});
+
+	it("brings the payoff date forward when extra payments shorten the loan", () => {
+		const base = mortgage.compute({ ...defaultsOf(mortgage), startYear: 2025 });
+		const fast = mortgage.compute({
+			...defaultsOf(mortgage),
+			startYear: 2025,
+			extraMonthly: 500,
+		});
+		expect(fast.outputs.payoffTime as number).toBeLessThan(base.outputs.payoffTime as number);
+		// Earlier payoff ⇒ a strictly earlier (not equal) date string.
+		expect(fast.outputs.payoffDate).not.toBe(base.outputs.payoffDate);
+	});
+
+	it("exposes a full monthly amortization schedule for the table viz", () => {
+		const r = mortgage.compute(defaultsOf(mortgage));
+		const tableViz = mortgage.visualizations.find((v) => v.type === "amortization_table");
+		expect(tableViz).toBeDefined();
+		const data = tableViz!.dataMapping(r, defaultsOf(mortgage));
+		const schedule = data.meta?.schedule as { month: number }[] | undefined;
+		expect(schedule?.length).toBe(360);
+		expect(schedule?.[0].month).toBe(1);
 	});
 });
 
